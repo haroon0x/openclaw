@@ -1,6 +1,8 @@
 import type { ChatType } from "../channels/chat-type.js";
 import type { AgentModelConfig, AgentModelByChatType } from "./types.agents-shared.js";
 
+export type { AgentModelConfig, AgentModelByChatType };
+
 type AgentModelListLike = {
   primary?: string;
   fallbacks?: string[];
@@ -26,22 +28,26 @@ export function resolveAgentModelFallbackValues(model?: AgentModelConfig): strin
   return Array.isArray(model.fallbacks) ? model.fallbacks : [];
 }
 
+/**
+ * Get the model override for a specific chat type (direct/group/channel).
+ * Returns undefined if no override is configured for that chat type.
+ * Trims whitespace from the override value for consistency with primary model resolution.
+ */
 export function resolveAgentModelByChatType(
   model?: AgentModelConfig,
   chatType?: ChatType,
 ): string | undefined {
-  // If no chat type specified, fall back to primary model
-  if (!chatType) {
-    return resolveAgentModelPrimaryValue(model);
-  }
-  if (!model || typeof model !== "object") {
+  // Consistent behavior: only return an override if chatType is provided AND configured
+  if (!chatType || !model || typeof model !== "object") {
     return undefined;
   }
-  const byChatType = model.byChatType;
-  if (!byChatType) {
-    return undefined;
+  const override = model.byChatType?.[chatType];
+  // Trim whitespace from the override value, like we do for primary
+  if (override) {
+    const trimmed = override.trim();
+    return trimmed || undefined;
   }
-  return byChatType[chatType];
+  return undefined;
 }
 
 /**
