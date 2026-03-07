@@ -291,4 +291,42 @@ describe("models-config", () => {
       });
     });
   });
+
+  it("does not persist resolved env-backed apiKey as plaintext to models.json", async () => {
+    await withTempHome(async () => {
+      await withEnvVar("LLM_API_KEY", "secret-plaintext-value", async () => {
+        const cfg: OpenClawConfig = {
+          models: {
+            providers: {
+              custom: {
+                baseUrl: "https://custom.example.com",
+                api: "openai-completions",
+                apiKey: "${LLM_API_KEY}",
+                models: [
+                  {
+                    id: "custom-model",
+                    name: "Custom",
+                    input: ["text"],
+                    reasoning: false,
+                    cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+                    contextWindow: 1000,
+                    maxTokens: 100,
+                  },
+                ],
+              },
+            },
+          },
+        };
+
+        await ensureOpenClawModelsJson(cfg);
+
+        const parsed = await readGeneratedModelsJson<{
+          providers: Record<string, { apiKey?: string; baseUrl?: string }>;
+        }>();
+
+        expect(parsed.providers.custom?.apiKey).toBe("${LLM_API_KEY}");
+        expect(parsed.providers.custom?.apiKey).not.toBe("secret-plaintext-value");
+      });
+    });
+  });
 });

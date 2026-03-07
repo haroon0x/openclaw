@@ -231,7 +231,22 @@ export async function ensureOpenClawModelsJson(
     providers: mergedProviders,
     agentDir,
   });
-  const next = `${JSON.stringify({ providers: normalizedProviders }, null, 2)}\n`;
+
+  // Restore the original configured apiKey (which may include ${ENV_VAR} or other references)
+  // to avoid persisting resolved plaintext secrets into agents/*/agent/models.json.
+  const safeProviders: Record<string, ProviderConfig> = {};
+  for (const [key, provider] of Object.entries(normalizedProviders ?? {})) {
+    const original = mergedProviders[key];
+    const safeProvider = { ...provider };
+    if (original && original.apiKey !== undefined) {
+      safeProvider.apiKey = original.apiKey;
+    } else {
+      delete safeProvider.apiKey;
+    }
+    safeProviders[key] = safeProvider;
+  }
+
+  const next = `${JSON.stringify({ providers: safeProviders }, null, 2)}\n`;
   const existingRaw = await readRawFile(targetPath);
 
   if (existingRaw === next) {
