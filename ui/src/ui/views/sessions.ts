@@ -30,6 +30,9 @@ export type SessionsProps = {
     },
   ) => void;
   onDelete: (key: string) => void;
+  confirmingDeletes: Set<string>;
+  onStartDelete: (key: string) => void;
+  onCancelDelete: (key: string) => void;
 };
 
 const THINK_LEVELS = ["", "off", "minimal", "low", "medium", "high", "xhigh"] as const;
@@ -206,7 +209,16 @@ export function renderSessions(props: SessionsProps) {
                 <div class="muted">No sessions found.</div>
               `
             : rows.map((row) =>
-                renderRow(row, props.basePath, props.onPatch, props.onDelete, props.loading),
+                renderRow(
+                  row,
+                  props.basePath,
+                  props.onPatch,
+                  props.onDelete,
+                  props.loading,
+                  props.confirmingDeletes.has(row.key),
+                  props.onStartDelete,
+                  props.onCancelDelete,
+                ),
               )
         }
       </div>
@@ -220,6 +232,9 @@ function renderRow(
   onPatch: SessionsProps["onPatch"],
   onDelete: SessionsProps["onDelete"],
   disabled: boolean,
+  isConfirmingDelete: boolean,
+  onStartDelete: (key: string) => void,
+  onCancelDelete: (key: string) => void,
 ) {
   const updated = row.updatedAt ? formatRelativeTimestamp(row.updatedAt) : "n/a";
   const rawThinking = row.thinkingLevel ?? "";
@@ -312,9 +327,29 @@ function renderRow(
         </select>
       </div>
       <div>
-        <button class="btn danger" ?disabled=${disabled} @click=${() => onDelete(row.key)}>
-          Delete
-        </button>
+        ${
+          isConfirmingDelete
+            ? html`
+              <button
+                class="btn danger"
+                ?disabled=${disabled}
+                @click=${() => onDelete(row.key)}
+                @blur=${() => setTimeout(() => onCancelDelete(row.key), 200)}
+                title="Click again to confirm"
+              >
+                Sure?
+              </button>
+            `
+            : html`
+              <button
+                class="btn danger"
+                ?disabled=${disabled}
+                @click=${() => onStartDelete(row.key)}
+              >
+                Delete
+              </button>
+            `
+        }
       </div>
     </div>
   `;

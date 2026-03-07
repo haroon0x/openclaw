@@ -248,6 +248,7 @@ export class OpenClawApp extends LitElement {
   @state() sessionsIncludeGlobal = true;
   @state() sessionsIncludeUnknown = false;
   @state() sessionsHideCron = true;
+  @state() sessionsConfirmingDeletes = new Set<string>();
 
   @state() usageLoading = false;
   @state() usageResult: import("./types.js").SessionsUsageResult | null = null;
@@ -615,6 +616,18 @@ export class OpenClawApp extends LitElement {
     const newRatio = Math.max(0.4, Math.min(0.7, ratio));
     this.splitRatio = newRatio;
     this.applySettings({ ...this.settings, splitRatio: newRatio });
+  }
+
+  handleStartDeleteSession(key: string) {
+    const next = new Set(this.sessionsConfirmingDeletes);
+    next.add(key);
+    this.sessionsConfirmingDeletes = next;
+  }
+
+  handleCancelDeleteSession(key: string) {
+    const next = new Set(this.sessionsConfirmingDeletes);
+    next.delete(key);
+    this.sessionsConfirmingDeletes = next;
   }
 
   render() {

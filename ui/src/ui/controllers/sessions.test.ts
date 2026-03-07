@@ -34,7 +34,6 @@ describe("deleteSessionAndRefresh", () => {
       throw new Error(`unexpected method: ${method}`);
     });
     const state = createState(request);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
 
     const deleted = await deleteSessionAndRefresh(state, "agent:main:test");
 
@@ -52,19 +51,6 @@ describe("deleteSessionAndRefresh", () => {
     expect(state.sessionsLoading).toBe(false);
   });
 
-  it("does not refresh sessions when user cancels delete", async () => {
-    const request = vi.fn(async () => undefined);
-    const state = createState(request, { sessionsError: "existing error" });
-    vi.spyOn(window, "confirm").mockReturnValue(false);
-
-    const deleted = await deleteSessionAndRefresh(state, "agent:main:test");
-
-    expect(deleted).toBe(false);
-    expect(request).not.toHaveBeenCalled();
-    expect(state.sessionsError).toBe("existing error");
-    expect(state.sessionsLoading).toBe(false);
-  });
-
   it("does not refresh sessions when delete fails and preserves the delete error", async () => {
     const request = vi.fn(async (method: string) => {
       if (method === "sessions.delete") {
@@ -76,7 +62,6 @@ describe("deleteSessionAndRefresh", () => {
       throw new Error(`unexpected method: ${method}`);
     });
     const state = createState(request);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
 
     const deleted = await deleteSessionAndRefresh(state, "agent:main:test");
 
@@ -100,5 +85,21 @@ describe("deleteSession", () => {
 
     expect(deleted).toBe(false);
     expect(request).not.toHaveBeenCalled();
+  });
+
+  it("sets loading state and returns true on success", async () => {
+    const request = vi.fn(async () => ({ ok: true }));
+    const state = createState(request);
+
+    const deleted = await deleteSession(state, "agent:main:test");
+
+    expect(deleted).toBe(true);
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(request).toHaveBeenCalledWith("sessions.delete", {
+      key: "agent:main:test",
+      deleteTranscript: true,
+    });
+    expect(state.sessionsLoading).toBe(false);
+    expect(state.sessionsError).toBeNull();
   });
 });

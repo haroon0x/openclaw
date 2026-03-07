@@ -434,6 +434,9 @@ export function renderApp(state: AppViewState) {
                 onRefresh: () => loadSessions(state),
                 onPatch: (key, patch) => patchSession(state, key, patch),
                 onDelete: (key) => deleteSessionAndRefresh(state, key),
+                confirmingDeletes: state.sessionsConfirmingDeletes,
+                onStartDelete: (key) => state.handleStartDeleteSession(key),
+                onCancelDelete: (key) => state.handleCancelDeleteSession(key),
               })
             : nothing
         }

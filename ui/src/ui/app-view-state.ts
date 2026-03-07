@@ -154,6 +154,7 @@ export type AppViewState = {
   sessionsIncludeGlobal: boolean;
   sessionsIncludeUnknown: boolean;
   sessionsHideCron: boolean;
+  sessionsConfirmingDeletes: Set<string>;
   usageLoading: boolean;
   usageResult: SessionsUsageResult | null;
   usageCostSummary: CostUsageSummary | null;
@@ -318,4 +319,6 @@ export type AppViewState = {
     handleOpenSidebar: (content: string) => void;
     handleCloseSidebar: () => void;
     handleSplitRatioChange: (ratio: number) => void;
+    handleStartDeleteSession: (key: string) => void;
+    handleCancelDeleteSession: (key: string) => void;
   };
